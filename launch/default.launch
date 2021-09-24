@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="node_required" default="false"  />
+  <arg name="node_name"     default="merger" />
+
+  <!--***********************************-->
+  <!-- Hi-Ros Skeleton Merger Parameters -->
+  <!--***********************************-->
+  <arg name="input_topic"  default=""   />
+  <arg name="output_topic" default=""   />
+
+  <arg name="n_detectors"  default="-1" />
+  <arg name="max_delta_t"  default="0"  />
+
+  <!--*****************************-->
+  <!-- Hi-Ros Skeleton Merger Node -->
+  <!--*****************************-->
+  <node pkg="hiros_skeleton_merger" type="hiros_skeleton_merger" ns="hiros/sm" name="$(arg node_name)" output="screen" required="$(arg node_required)">
+    <param name="node_name"    type="str"    value="$(arg node_name)"    />
+
+    <param name="input_topic"  type="str"    value="$(arg input_topic)"  />
+    <param name="output_topic" type="str"    value="$(arg output_topic)" />
+
+    <param name="n_detectors"  type="int"    value="$(arg n_detectors)"  />
+    <param name="max_delta_t"  type="double" value="$(arg max_delta_t)"  />
+  </node>
+
+</launch>
