@@ -53,6 +53,12 @@ void hiros::merge::utils::merge(skeletons::types::Skeleton& t_sk1,
   else {
     t_sk1.addLink(t_lk2);
   }
+
+  // Fix link center if possible
+  if (t_sk1.hasMarker(t_lk2.parent_marker) && t_sk1.hasMarker(t_lk2.child_marker)) {
+    t_sk1.getLink(t_lk2.id).center.pose.position = wavg(t_sk1.getMarker(t_lk2.parent_marker).center.pose.position,
+                                                        t_sk1.getMarker(t_lk2.child_marker).center.pose.position);
+  }
 }
 
 double hiros::merge::utils::wavg(const double& t_e1, const double& t_e2, const double& t_w1, const double& t_w2)
