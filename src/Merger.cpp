@@ -63,6 +63,7 @@ void hiros::merge::Merger::stop()
   }
 
   ROS_INFO_STREAM(BASH_MSG_GREEN << "Hi-ROS Skeleton Merger... STOPPED" << BASH_MSG_RESET);
+  ros::shutdown();
 }
 
 void hiros::merge::Merger::setupRosTopics()
@@ -79,6 +80,11 @@ void hiros::merge::Merger::setupRosTopics()
 
 void hiros::merge::Merger::callback(const hiros_skeleton_msgs::SkeletonGroup& t_msg)
 {
+  if (!ros::ok()) {
+    stop();
+    exit(EXIT_FAILURE);
+  }
+
   m_last_skeleton_group = hiros::skeletons::utils::toStruct(t_msg);
   estimateNumberOfDetectors();
 
