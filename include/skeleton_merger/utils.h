@@ -24,6 +24,9 @@ namespace hiros {
                  const double& t_w2 = 1,
                  const bool& t_weight_by_confidence = false);
 
+      void alignLinkOrientation(hiros::skeletons::types::Skeleton& t_sk, const int& t_lk_id);
+      tf2::Vector3 closestCartesianAxis(const tf2::Vector3& t_vec);
+
       double wavg(const double& t_e1, const double& t_e2, const double& t_w1 = 1, const double& t_w2 = 1);
       tf2::Vector3
       wavg(const tf2::Vector3& t_v1, const tf2::Vector3& t_v2, const double& t_w1 = 1, const double& t_w2 = 1);
