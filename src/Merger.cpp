@@ -19,7 +19,7 @@ void hiros::merge::Merger::configure()
   m_nh.getParam("output_topic", m_params.output_topic);
 
   if (m_params.input_topic.empty() || m_params.output_topic.empty()) {
-    ROS_FATAL_STREAM("Hi-ROS Skeleton Merger... Required topics configuration not provided. Unable to continue");
+    ROS_FATAL_STREAM("Hi-ROS Skeleton Merger Error: Required topics configuration not provided. Unable to continue");
     ros::shutdown();
     exit(EXIT_FAILURE);
   }
@@ -71,8 +71,8 @@ void hiros::merge::Merger::setupRosTopics()
   m_in_skeleton_group_sub = m_nh.subscribe(m_params.input_topic, 1, &Merger::callback, this);
 
   while (m_in_skeleton_group_sub.getNumPublishers() == 0 && !ros::isShuttingDown()) {
-    ROS_WARN_STREAM_THROTTLE(
-      2, "Hi-ROS Skeleton Merger... No input messages on skeleton group topic '" << m_params.input_topic << "'");
+    ROS_WARN_STREAM_DELAYED_THROTTLE(
+      2, "Hi-ROS Skeleton Merger Warning: No input messages on skeleton group topic '" << m_params.input_topic << "'");
   }
 
   m_out_skeleton_group_pub = m_nh.advertise<hiros_skeleton_msgs::SkeletonGroup>(m_params.output_topic, 1);
