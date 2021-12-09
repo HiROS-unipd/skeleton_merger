@@ -48,6 +48,9 @@ namespace hiros {
                                          const double& t_w1 = 1,
                                          const double& t_w2 = 1);
 
+      std::vector<unsigned int> split(const std::vector<hiros::skeletons::types::KinematicState>& t_states,
+                                      const double& t_max_position_delta,
+                                      const double& t_max_orientation_delta);
     } // namespace utils
   } // namespace merge
 } // namespace hiros

@@ -25,6 +25,9 @@ namespace hiros {
 
       int n_detectors;
       double max_delta_t;
+
+      double max_position_delta;
+      double max_orientation_delta;
     };
 
     class Merger
@@ -49,6 +52,9 @@ namespace hiros {
       void addSkeletonToBuffer();
 
       void computeAvgSkeleton(const int& t_id);
+      void removeOutliers(std::vector<hiros::skeletons::types::Skeleton>& t_tracks);
+      void removeOutlierMarkers(std::vector<hiros::skeletons::types::Skeleton>& t_tracks);
+      void removeOutlierLinks(std::vector<hiros::skeletons::types::Skeleton>& t_tracks);
 
       ros::NodeHandle m_nh{"~"};
 
@@ -62,6 +68,7 @@ namespace hiros {
 
       hiros::skeletons::types::SkeletonGroup m_last_skeleton_group{};
       hiros::skeletons::types::SkeletonGroup m_merged_skeletons{};
+      hiros::skeletons::types::SkeletonGroup m_prev_merged_skeletons{};
 
       // map<skeleton_id, vector<skeletons>>
       std::map<int, std::vector<hiros::skeletons::types::Skeleton>> m_skeletons_to_merge{};

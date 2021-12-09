@@ -1,3 +1,7 @@
+// Standard dependencies
+#include <numeric>
+#include <set>
+
 // Custom external dependencies
 #include "skeletons/utils.h"
 
@@ -186,4 +190,64 @@ hiros::skeletons::types::Link hiros::merge::utils::wavg(const skeletons::types::
   avg_lk.center = wavg(t_lk1.center, t_lk2.center, t_w1, t_w2);
 
   return avg_lk;
+}
+
+std::vector<unsigned int>
+hiros::merge::utils::split(const std::vector<hiros::skeletons::types::KinematicState>& t_states,
+                           const double& t_max_position_delta,
+                           const double& t_max_orientation_delta)
+{
+  if (t_states.empty()) {
+    return {};
+  }
+
+  std::vector<unsigned int> missing_idxs(t_states.size());
+  // Fill with 0, 1, ..., size(t_states)
+  std::iota(std::begin(missing_idxs), std::end(missing_idxs), 0);
+
+  std::vector<std::set<unsigned int>> groups;
+
+  while (!missing_idxs.empty()) {
+    // Initialize the group with the first unassigned kinematic state
+    groups.push_back(std::set<unsigned int>{missing_idxs.front()});
+
+    auto group_idx = groups.size() - 1;
+    for (const auto& first_ks_idx : groups.at(group_idx)) {
+      for (unsigned int ks_idx = 0; ks_idx < t_states.size(); ++ks_idx) {
+        // Fill the group with kinematic states close to the first one
+        auto pos_dist =
+          hiros::skeletons::utils::distance(t_states.at(first_ks_idx).pose.position, t_states.at(ks_idx).pose.position);
+        auto or_dist = hiros::skeletons::utils::distance(t_states.at(first_ks_idx).pose.orientation,
+                                                         t_states.at(ks_idx).pose.orientation);
+
+        if ((t_max_position_delta <= 0 || pos_dist < t_max_position_delta)
+            && (t_max_orientation_delta <= 0 || or_dist < t_max_orientation_delta)) {
+          groups.at(group_idx).insert(ks_idx);
+        }
+      }
+    }
+
+    // Erase indexes that were assigned to the group from missing_idxs
+    missing_idxs.erase(std::remove_if(missing_idxs.begin(),
+                                      missing_idxs.end(),
+                                      [&](const auto& e) { return groups.at(group_idx).contains(e); }),
+                       missing_idxs.end());
+  }
+
+  // If all the kinematic states belong to the same group, return the only group
+  if (groups.size() == 1) {
+    return std::vector<unsigned int>(groups.front().begin(), groups.front().end());
+  }
+
+  // Sort by size
+  std::sort(
+    std::begin(groups), std::end(groups), [](const auto& lhs, const auto& rhs) { return lhs.size() > rhs.size(); });
+
+  // If the two largest groups have the same number of elements, return empty set
+  if (groups.at(0).size() == groups.at(1).size()) {
+    return {};
+  }
+
+  // Return the group with the largest number of elements
+  return std::vector<unsigned int>(groups.front().begin(), groups.front().end());
 }

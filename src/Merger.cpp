@@ -26,6 +26,8 @@ void hiros::merge::Merger::configure()
 
   m_nh.getParam("n_detectors", m_params.n_detectors);
   m_nh.getParam("max_delta_t", m_params.max_delta_t);
+  m_nh.getParam("max_position_delta", m_params.max_position_delta);
+  m_nh.getParam("max_orientation_delta", m_params.max_orientation_delta);
 
   if (m_params.n_detectors > 0) {
     m_n_detectors = static_cast<unsigned long>(m_params.n_detectors);
@@ -160,6 +162,7 @@ void hiros::merge::Merger::publish()
 
   m_out_skeleton_group_pub.publish(hiros::skeletons::utils::toMsg(m_merged_skeletons));
 
+  m_prev_merged_skeletons = m_merged_skeletons;
   m_merged_skeletons = {};
   m_skeletons_to_merge.clear();
 }
@@ -174,11 +177,113 @@ void hiros::merge::Merger::addSkeletonToBuffer()
 void hiros::merge::Merger::computeAvgSkeleton(const int& t_id)
 {
   auto& tracks_to_merge = m_skeletons_to_merge.at(t_id);
-  auto& avg_track = tracks_to_merge.front();
 
-  for (unsigned int i = 1; i < tracks_to_merge.size(); ++i) {
-    utils::merge(avg_track, tracks_to_merge.at(i), i, 1, true);
+  removeOutliers(tracks_to_merge);
+
+  if (tracks_to_merge.empty()) {
+    return;
+  }
+
+  auto& avg_track = tracks_to_merge.front();
+  for (unsigned int track_idx = 1; track_idx < tracks_to_merge.size(); ++track_idx) {
+    utils::merge(avg_track, tracks_to_merge.at(track_idx), track_idx, 1, true);
   }
 
   m_merged_skeletons.addSkeleton(avg_track);
+}
+
+void hiros::merge::Merger::removeOutliers(std::vector<hiros::skeletons::types::Skeleton>& t_tracks)
+{
+  if (m_params.max_position_delta <= 0 && m_params.max_orientation_delta <= 0) {
+    return;
+  }
+
+  if (t_tracks.empty()) {
+    return;
+  }
+
+  removeOutlierMarkers(t_tracks);
+  removeOutlierLinks(t_tracks);
+}
+
+void hiros::merge::Merger::removeOutlierMarkers(std::vector<hiros::skeletons::types::Skeleton>& t_tracks)
+{
+  std::vector<unsigned int> indexes_to_erase;
+  std::vector<hiros::skeletons::types::KinematicState> states;
+
+  for (int mk_idx = 0; mk_idx < static_cast<int>(t_tracks.front().max_markers); ++mk_idx) {
+    indexes_to_erase.clear();
+    states.clear();
+
+    for (unsigned int track_idx = 0; track_idx < t_tracks.size(); ++track_idx) {
+      auto& track = t_tracks.at(track_idx);
+
+      if (track.hasMarker(mk_idx)) {
+        indexes_to_erase.push_back(track_idx);
+        states.push_back(track.getMarker(mk_idx).center);
+      }
+    }
+
+    if (m_prev_merged_skeletons.hasSkeleton(t_tracks.front().id)
+        && m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).hasMarker(mk_idx)) {
+      // In this way the previous track has double weight for the outliers detection
+      states.push_back(m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).getMarker(mk_idx).center);
+      states.push_back(m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).getMarker(mk_idx).center);
+    }
+
+    auto res = utils::split(states, m_params.max_position_delta, m_params.max_orientation_delta);
+
+    indexes_to_erase.erase(
+      std::remove_if(indexes_to_erase.begin(),
+                     indexes_to_erase.end(),
+                     [&](const int& e) { return (std::find(res.begin(), res.end(), e) != res.end()); }),
+      indexes_to_erase.end());
+
+    for (unsigned int idx = 0; idx < t_tracks.size(); ++idx) {
+      if (std::find(indexes_to_erase.begin(), indexes_to_erase.end(), idx) != indexes_to_erase.end()) {
+        t_tracks.at(idx).removeMarker(mk_idx);
+      }
+    }
+  }
+}
+
+void hiros::merge::Merger::removeOutlierLinks(std::vector<hiros::skeletons::types::Skeleton>& t_tracks)
+{
+  std::vector<unsigned int> indexes_to_erase;
+  std::vector<hiros::skeletons::types::KinematicState> states;
+
+  for (int lk_idx = 0; lk_idx < static_cast<int>(t_tracks.front().max_links); ++lk_idx) {
+    indexes_to_erase.clear();
+    states.clear();
+
+    for (unsigned int track_idx = 0; track_idx < t_tracks.size(); ++track_idx) {
+      auto& track = t_tracks.at(track_idx);
+
+      if (track.hasLink(lk_idx)) {
+        indexes_to_erase.push_back(track_idx);
+        states.push_back(track.getLink(lk_idx).center);
+      }
+    }
+
+    if (m_prev_merged_skeletons.hasSkeleton(t_tracks.front().id)
+        && m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).hasLink(lk_idx)) {
+      // In this way the previous track has double weight for the outliers detection
+      states.push_back(m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).getLink(lk_idx).center);
+      states.push_back(m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).getLink(lk_idx).center);
+    }
+
+    auto res = utils::split(states, m_params.max_position_delta, m_params.max_orientation_delta);
+
+    indexes_to_erase.erase(
+      std::remove_if(indexes_to_erase.begin(),
+                     indexes_to_erase.end(),
+                     [&](const int& e) { return (std::find(res.begin(), res.end(), e) != res.end()); }),
+      indexes_to_erase.end());
+
+    for (unsigned int idx = 0; idx < t_tracks.size(); ++idx) {
+      if (std::find(indexes_to_erase.begin(), indexes_to_erase.end(), idx) != indexes_to_erase.end()) {
+        t_tracks.at(idx).removeLink(lk_idx);
+      }
+    }
+  }
 }
