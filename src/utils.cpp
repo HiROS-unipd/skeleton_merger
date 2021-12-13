@@ -220,8 +220,8 @@ hiros::merge::utils::split(const std::vector<hiros::skeletons::types::KinematicS
         auto or_dist = hiros::skeletons::utils::distance(t_states.at(first_ks_idx).pose.orientation,
                                                          t_states.at(ks_idx).pose.orientation);
 
-        if ((t_max_position_delta <= 0 || pos_dist < t_max_position_delta)
-            && (t_max_orientation_delta <= 0 || or_dist < t_max_orientation_delta)) {
+        if ((t_max_position_delta <= 0 || std::isnan(pos_dist) || pos_dist < t_max_position_delta)
+            && (t_max_orientation_delta <= 0 || std::isnan(or_dist) || or_dist < t_max_orientation_delta)) {
           groups.at(group_idx).insert(ks_idx);
         }
       }
