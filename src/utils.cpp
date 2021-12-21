@@ -92,7 +92,7 @@ void hiros::merge::utils::alignLinkOrientation(hiros::skeletons::types::Skeleton
   auto quat_axis = tf2::quatRotate(link.center.pose.orientation, closest_cartesian_axis).normalized();
 
   auto rot_axis = quat_axis.cross(link_axis).normalized();
-  auto rot_angle = acos(quat_axis.dot(link_axis));
+  auto rot_angle = acos(std::min(std::max(-1., quat_axis.dot(link_axis)), 1.));
   // Rotation to align the link orientation to the link axis
   auto rot_quat = tf2::Quaternion(rot_axis, rot_angle);
 
