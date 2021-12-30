@@ -28,6 +28,8 @@ namespace hiros {
 
       double max_position_delta;
       double max_orientation_delta;
+
+      int pelvis_marker_id;
     };
 
     class Merger
@@ -52,9 +54,11 @@ namespace hiros {
       void addSkeletonToBuffer();
 
       void computeAvgSkeleton(const int& t_id);
+      void removeFlippedTracks(std::vector<hiros::skeletons::types::Skeleton>& t_tracks);
       void removeOutliers(std::vector<hiros::skeletons::types::Skeleton>& t_tracks);
       void removeOutlierMarkers(std::vector<hiros::skeletons::types::Skeleton>& t_tracks);
       void removeOutlierLinks(std::vector<hiros::skeletons::types::Skeleton>& t_tracks);
+      void cleanupLinks(hiros::skeletons::types::Skeleton& t_skel);
 
       ros::NodeHandle m_nh{"~"};
 

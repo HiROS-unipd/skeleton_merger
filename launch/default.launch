@@ -16,6 +16,8 @@
   <arg name="max_position_delta"    default="-1" />
   <arg name="max_orientation_delta" default="-1" />
 
+  <arg name="pelvis_marker_id"      default="-1" />
+
   <!--*****************************-->
   <!-- Hi-Ros Skeleton Merger Node -->
   <!--*****************************-->
@@ -30,6 +32,8 @@
 
     <param name="max_position_delta"    type="double" value="$(arg max_position_delta)"    />
     <param name="max_orientation_delta" type="double" value="$(arg max_orientation_delta)" />
+
+    <param name="pelvis_marker_id"      type="int"    value="$(arg pelvis_marker_id)"      />
   </node>
 
 </launch>

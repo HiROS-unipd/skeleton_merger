@@ -16,6 +16,8 @@
 
     <arg name="max_position_delta"    value="0.2"            />
     <arg name="max_orientation_delta" value="1.57079632679"  />
+
+    <arg name="pelvis_marker_id"      value="0"              />
   </include>
 
 </launch>

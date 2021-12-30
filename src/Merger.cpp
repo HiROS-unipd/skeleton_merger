@@ -28,6 +28,7 @@ void hiros::merge::Merger::configure()
   m_nh.getParam("max_delta_t", m_params.max_delta_t);
   m_nh.getParam("max_position_delta", m_params.max_position_delta);
   m_nh.getParam("max_orientation_delta", m_params.max_orientation_delta);
+  m_nh.getParam("pelvis_marker_id", m_params.pelvis_marker_id);
 
   if (m_params.n_detectors > 0) {
     m_n_detectors = static_cast<unsigned long>(m_params.n_detectors);
@@ -178,6 +179,7 @@ void hiros::merge::Merger::computeAvgSkeleton(const int& t_id)
 {
   auto& tracks_to_merge = m_skeletons_to_merge.at(t_id);
 
+  removeFlippedTracks(tracks_to_merge);
   removeOutliers(tracks_to_merge);
 
   if (tracks_to_merge.empty()) {
@@ -189,7 +191,47 @@ void hiros::merge::Merger::computeAvgSkeleton(const int& t_id)
     utils::merge(avg_track, tracks_to_merge.at(track_idx), track_idx, 1, true);
   }
 
+  cleanupLinks(avg_track);
+
   m_merged_skeletons.addSkeleton(avg_track);
+}
+
+void hiros::merge::Merger::removeFlippedTracks(std::vector<hiros::skeletons::types::Skeleton>& t_tracks)
+{
+  if (m_params.pelvis_marker_id < 0) {
+    return;
+  }
+
+  // If there is only one track it is not possible to understand if it is flipped
+  if (t_tracks.size() <= 1) {
+    return;
+  }
+
+  std::vector<hiros::skeletons::types::KinematicState> states;
+
+  for (unsigned int track_idx = 0; track_idx < t_tracks.size(); ++track_idx) {
+    if (t_tracks.at(track_idx).hasMarker(m_params.pelvis_marker_id)) {
+      states.push_back(t_tracks.at(track_idx).getMarker(m_params.pelvis_marker_id).center);
+    }
+  }
+
+  if (m_prev_merged_skeletons.hasSkeleton(t_tracks.front().id)
+      && m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).hasMarker(m_params.pelvis_marker_id)) {
+    states.push_back(
+      m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).getMarker(m_params.pelvis_marker_id).center);
+  }
+
+  auto indexes_to_keep = utils::split(states, -1, M_PI / 2);
+
+  int idx = -1;
+  t_tracks.erase(std::remove_if(t_tracks.begin(),
+                                t_tracks.end(),
+                                [&](const auto& e) {
+                                  ++idx;
+                                  return (std::find(indexes_to_keep.begin(), indexes_to_keep.end(), idx)
+                                          == indexes_to_keep.end());
+                                }),
+                 t_tracks.end());
 }
 
 void hiros::merge::Merger::removeOutliers(std::vector<hiros::skeletons::types::Skeleton>& t_tracks)
@@ -286,4 +328,15 @@ void hiros::merge::Merger::removeOutlierLinks(std::vector<hiros::skeletons::type
       }
     }
   }
+}
+
+void hiros::merge::Merger::cleanupLinks(hiros::skeletons::types::Skeleton& t_skel)
+{
+  t_skel.links.erase(std::remove_if(t_skel.links.begin(),
+                                    t_skel.links.end(),
+                                    [&](const auto& lk) {
+                                      return (!t_skel.hasMarker(lk.parent_marker)
+                                              || !t_skel.hasMarker(lk.parent_marker));
+                                    }),
+                     t_skel.links.end());
 }
