@@ -202,7 +202,7 @@ hiros::merge::utils::split(const std::vector<hiros::skeletons::types::KinematicS
   }
 
   std::vector<unsigned int> missing_idxs(t_states.size());
-  // Fill with 0, 1, ..., size(t_states)
+  // Fill with 0, 1, ..., size(t_states) - 1
   std::iota(std::begin(missing_idxs), std::end(missing_idxs), 0);
 
   std::vector<std::set<unsigned int>> groups;
@@ -211,9 +211,8 @@ hiros::merge::utils::split(const std::vector<hiros::skeletons::types::KinematicS
     // Initialize the group with the first unassigned kinematic state
     groups.push_back(std::set<unsigned int>{missing_idxs.front()});
 
-    auto group_idx = groups.size() - 1;
-    for (const auto& first_ks_idx : groups.at(group_idx)) {
-      for (unsigned int ks_idx = 0; ks_idx < t_states.size(); ++ks_idx) {
+    for (const auto& first_ks_idx : groups.back()) {
+      for (unsigned int ks_idx : missing_idxs) {
         // Fill the group with kinematic states close to the first one
         auto pos_dist =
           hiros::skeletons::utils::distance(t_states.at(first_ks_idx).pose.position, t_states.at(ks_idx).pose.position);
@@ -222,7 +221,7 @@ hiros::merge::utils::split(const std::vector<hiros::skeletons::types::KinematicS
 
         if ((t_max_position_delta <= 0 || std::isnan(pos_dist) || pos_dist < t_max_position_delta)
             && (t_max_orientation_delta <= 0 || std::isnan(or_dist) || or_dist < t_max_orientation_delta)) {
-          groups.at(group_idx).insert(ks_idx);
+          groups.back().insert(ks_idx);
         }
       }
     }
@@ -230,7 +229,7 @@ hiros::merge::utils::split(const std::vector<hiros::skeletons::types::KinematicS
     // Erase indexes that were assigned to the group from missing_idxs
     missing_idxs.erase(std::remove_if(missing_idxs.begin(),
                                       missing_idxs.end(),
-                                      [&](const auto& e) { return groups.at(group_idx).contains(e); }),
+                                      [&](const auto& e) { return groups.back().contains(e); }),
                        missing_idxs.end());
   }
 
