@@ -268,8 +268,6 @@ void hiros::merge::Merger::removeOutlierMarkers(std::vector<hiros::skeletons::ty
 
     if (m_prev_merged_skeletons.hasSkeleton(t_tracks.front().id)
         && m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).hasMarker(mk_idx)) {
-      // In this way the previous track has double weight for the outliers detection
-      states.push_back(m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).getMarker(mk_idx).center);
       states.push_back(m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).getMarker(mk_idx).center);
     }
 
@@ -309,8 +307,6 @@ void hiros::merge::Merger::removeOutlierLinks(std::vector<hiros::skeletons::type
 
     if (m_prev_merged_skeletons.hasSkeleton(t_tracks.front().id)
         && m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).hasLink(lk_idx)) {
-      // In this way the previous track has double weight for the outliers detection
-      states.push_back(m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).getLink(lk_idx).center);
       states.push_back(m_prev_merged_skeletons.getSkeleton(t_tracks.front().id).getLink(lk_idx).center);
     }
 
