@@ -2,85 +2,94 @@
 #define hiros_skeleton_merger_Merger_h
 
 // ROS dependencies
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
-// Custom ROS Message dependencies
-#include "hiros_skeleton_msgs/SkeletonGroup.h"
+// Custom ROS message dependencies
+#include "hiros_skeleton_msgs/msg/skeleton_group.hpp"
 
-// Custom External Packages dependencies
+// Custom external packages dependencies
 #include "skeletons/types.h"
 
 #define BASH_MSG_RESET "\033[0m"
 #define BASH_MSG_GREEN "\033[32m"
 
 namespace hiros {
-  namespace merge {
+namespace skeletons {
 
-    struct MergerParameters
-    {
-      std::string node_name;
+class Merger : public rclcpp::Node {
+ public:
+  Merger();
+  ~Merger();
 
-      std::string input_topic;
-      std::string output_topic;
+ private:
+  struct Parameters {
+    std::string input_topic{};
+    std::string output_topic{};
 
-      int n_detectors;
-      double max_delta_t;
+    int n_detectors{};
+    double max_delta_t{};
 
-      double max_position_delta;
-      double max_orientation_delta;
+    double max_position_delta{};
+    double max_orientation_delta{};
 
-      int pelvis_marker_id;
-    };
+    int pelvis_marker_id{};
+  };
 
-    class Merger
-    {
-    public:
-      Merger() {}
-      ~Merger() {}
+  template <typename T>
+  bool getParam(const std::string& name, T& parameter) {
+    declare_parameter<T>(name);
+    return get_parameter(name, parameter);
+  }
 
-      void configure();
-      void start();
+  void start();
+  void stop() const;
+  void configure();
 
-    private:
-      void stop();
-      void setupRosTopics();
+  void getParams();
+  void setupRosTopics();
 
-      void callback(const hiros_skeleton_msgs::SkeletonGroup& t_msg);
+  void estimateNumberOfDetectors();
+  bool okToMerge() const;
+  void mergeSkeletons();
+  void publish();
+  void addSkeletonToBuffer();
 
-      void estimateNumberOfDetectors();
-      bool okToMerge() const;
-      void mergeSkeletons();
-      void publish();
-      void addSkeletonToBuffer();
+  void computeAvgSkeleton(const int& id);
+  void removeFlippedTracks(
+      std::vector<hiros::skeletons::types::Skeleton>& tracks);
+  void removeOutliers(std::vector<hiros::skeletons::types::Skeleton>& tracks);
+  void removeOutlierMarkers(
+      std::vector<hiros::skeletons::types::Skeleton>& tracks);
+  void removeOutlierLinks(
+      std::vector<hiros::skeletons::types::Skeleton>& tracks);
+  void cleanupLinks(hiros::skeletons::types::Skeleton& skel);
 
-      void computeAvgSkeleton(const int& t_id);
-      void removeFlippedTracks(std::vector<hiros::skeletons::types::Skeleton>& t_tracks);
-      void removeOutliers(std::vector<hiros::skeletons::types::Skeleton>& t_tracks);
-      void removeOutlierMarkers(std::vector<hiros::skeletons::types::Skeleton>& t_tracks);
-      void removeOutlierLinks(std::vector<hiros::skeletons::types::Skeleton>& t_tracks);
-      void cleanupLinks(hiros::skeletons::types::Skeleton& t_skel);
+  std::vector<unsigned int> split(
+      const std::vector<hiros::skeletons::types::KinematicState>& states,
+      const double& max_position_delta,
+      const double& max_orientation_delta) const;
 
-      ros::NodeHandle m_nh{"~"};
+  void callback(const hiros_skeleton_msgs::msg::SkeletonGroup& msg);
 
-      MergerParameters m_params{};
+  Parameters params_{};
 
-      ros::Subscriber m_in_skeleton_group_sub{};
-      ros::Publisher m_out_skeleton_group_pub{};
+  rclcpp::Subscription<hiros_skeleton_msgs::msg::SkeletonGroup>::SharedPtr
+      sub_{};
+  rclcpp::Publisher<hiros_skeleton_msgs::msg::SkeletonGroup>::SharedPtr pub_{};
 
-      unsigned long m_n_detectors{0};
-      std::set<std::string> m_src_frames{};
+  unsigned long n_detectors_{0};
+  std::set<std::string> src_frames_{};
 
-      hiros::skeletons::types::SkeletonGroup m_last_skeleton_group{};
-      hiros::skeletons::types::SkeletonGroup m_merged_skeletons{};
-      hiros::skeletons::types::SkeletonGroup m_prev_merged_skeletons{};
+  hiros::skeletons::types::SkeletonGroup last_skeleton_group_{};
+  hiros::skeletons::types::SkeletonGroup merged_skeletons_{};
+  hiros::skeletons::types::SkeletonGroup prev_merged_skeletons_{};
 
-      // map<skeleton_id, vector<skeletons>>
-      std::map<int, std::vector<hiros::skeletons::types::Skeleton>> m_skeletons_to_merge{};
+  // map<skeleton_id, vector<skeletons>>
+  std::map<int, std::vector<hiros::skeletons::types::Skeleton>>
+      skeletons_to_merge_{};
+};
 
-      bool m_configured{false};
-    };
-
-  } // namespace merge
-} // namespace hiros
+}  // namespace skeletons
+}  // namespace hiros
 
 #endif

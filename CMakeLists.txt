@@ -1,54 +1,52 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 project(hiros_skeleton_merger)
 
-add_compile_options(-std=c++2a)
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
-# Find catkin macros and libraries if COMPONENTS list like find_package(catkin
-# REQUIRED COMPONENTS xyz) is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp hiros_skeleton_msgs)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(hiros_skeleton_msgs REQUIRED)
+find_package(hiros_skeleton_tracker REQUIRED)
 
-# Declare the package to be exported and made available to ros
-catkin_package(CATKIN_DEPENDS hiros_skeleton_msgs)
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # uncomment the line when a copyright and license is not present in all source files
+  #set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # uncomment the line when this package is not in a git repo
+  #set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
-# ##############################################################################
-# Build ##
-# ##############################################################################
-# Specify additional locations of header files Your package locations should be
-# listed before other locations
-include_directories(include
-                    ${catkin_INCLUDE_DIRS})
+add_executable(${PROJECT_NAME}_node
+    src/main.cpp
+    src/Merger.cpp
+)
+ament_target_dependencies(${PROJECT_NAME}_node rclcpp hiros_skeleton_msgs hiros_skeleton_tracker)
 
-# Declare a C++ executable With catkin_make all packages are built within a
-# single CMake context The recommended prefix ensures that target names across
-# packages don't collide add_executable(${PROJECT_NAME}_node
-add_executable(${PROJECT_NAME}_node src/main.cpp src/Merger.cpp src/utils.cpp)
+set_target_properties(${PROJECT_NAME}_node
+  PROPERTIES OUTPUT_NAME
+  ${PROJECT_NAME}
+  PREFIX
+  ""
+)
 
-# Rename C++ executable without prefix The above recommended prefix causes long
-# target names, the following renames the target back to the shorter version for
-# ease of user use e.g. "rosrun someones_pkg node" instead of "rosrun
-# someones_pkg someones_pkg_node"
-set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME
-                      ${PROJECT_NAME} PREFIX "")
+target_include_directories(${PROJECT_NAME}_node
+  PRIVATE include
+)
 
-# Add cmake target dependencies of the executable same as for the library above
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS}
-                 ${catkin_EXPORTED_TARGETS})
+install(
+  TARGETS ${PROJECT_NAME}_node
+  DESTINATION lib/${PROJECT_NAME}
+)
 
-# Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES})
+install(
+  DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
-set_target_properties(${PROJECT_NAME}_node PROPERTIES PUBLIC_HEADER
-                      include/skeleton_merger/Merger.h)
-
-target_include_directories(${PROJECT_NAME}_node PRIVATE include ${catkin_INCLUDE_DIRS})
-
-# ##############################################################################
-# Install ##
-# ##############################################################################
-install(TARGETS ${PROJECT_NAME}_node
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
-install(FILES include/skeleton_merger/Merger.h
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-
-install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+ament_package()

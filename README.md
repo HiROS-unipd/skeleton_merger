@@ -5,22 +5,12 @@ This ROS package takes as input the SkeletonGroup published by the [Skeleton Tra
 
 ## Dependencies
 * [Hi-ROS Skeleton Messages](https://github.com/hiros-unipd/skeleton_msgs)
-
-
-## Launch files
-**default.launch**
-Contains the default values for each parameter
-
-**custom\_configuration\_example.launch**
-Contains an example on how to set some parameters of choice
+* [Hi-ROS Skeleton Tracker](https://github.com/hiros-unipd/skeleton_tracker)
 
 
 ## Parameters
-
 | Parameter               | Description                                                                                       |
 | ----------------------- | ------------------------------------------------------------------------------------------------- |
-| `node_required`         | Set if the other ROS nodes on the PC should be killed when the driver is killed                   |
-| `node_name`             | Node name                                                                                         |
 | `input_topic`           | Input topic containing the tracked skeletons                                                      |
 | `output_topic`          | Output topic containing the merged skeletons                                                      |
 | `n_detectors`           | Number of detectors being used (if <= 0 the node will estimate the number of detectors online)    |
@@ -32,5 +22,5 @@ Contains an example on how to set some parameters of choice
 
 ## Usage
 ```
-roslaunch hiros_skeleton_merger custom_configuration_example.launch
+ros2 launch hiros_skeleton_merger default.launch.py
 ```

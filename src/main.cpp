@@ -1,15 +1,8 @@
-// ROS dependencies
-#include <ros/ros.h>
-
-// Internal dependencies
 #include "skeleton_merger/Merger.h"
 
-int main(int argc, char* argv[])
-{
-  ros::init(argc, argv, "hiros_skeleton_merger");
-
-  hiros::merge::Merger sm;
-  sm.start();
-
+int main(int argc, char* argv[]) {
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<hiros::skeletons::Merger>());
+  rclcpp::shutdown();
   exit(EXIT_SUCCESS);
 }
