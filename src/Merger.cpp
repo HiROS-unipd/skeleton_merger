@@ -12,15 +12,13 @@ hiros::skeletons::Merger::~Merger() { stop(); }
 void hiros::skeletons::Merger::start() {
   configure();
 
-  RCLCPP_INFO_STREAM(get_logger(), BASH_MSG_GREEN
-                                       << "Hi-ROS Skeleton Merger... RUNNING"
-                                       << BASH_MSG_RESET);
+  RCLCPP_INFO_STREAM(get_logger(),
+                     BASH_MSG_GREEN << "Running" << BASH_MSG_RESET);
 }
 
 void hiros::skeletons::Merger::stop() const {
-  RCLCPP_INFO_STREAM(get_logger(), BASH_MSG_GREEN
-                                       << "Hi-ROS Skeleton Merger... STOPPED"
-                                       << BASH_MSG_RESET);
+  RCLCPP_INFO_STREAM(get_logger(),
+                     BASH_MSG_GREEN << "Stopped" << BASH_MSG_RESET);
 
   rclcpp::shutdown();
 }
