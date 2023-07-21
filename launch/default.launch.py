@@ -1,16 +1,17 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 
+
 def generate_launch_description():
     ld = LaunchDescription()
 
-    node=Node(
-        package = 'hiros_skeleton_merger',
-        executable = 'hiros_skeleton_merger',
-        name = 'skeleton_merger',
+    node = Node(
+        package='hiros_skeleton_merger',
+        executable='hiros_skeleton_merger',
+        name='skeleton_merger',
         namespace='hiros',
-        output = 'screen',
-        parameters = [
+        output='screen',
+        parameters=[
             {'input_topic': '/input/topic'},
             {'output_topic': '/output/topic'},
             {'n_detectors': -1},
